@@ -39,16 +39,17 @@ def write_to_excel(data, filename="geocode_results.xlsx"):
     workbook.save(filename)
 
 # 导入省市区街道数据
-addresses = pd.read_excel("../cleaned.xlsx")
+addresses = pd.read_excel("cleaned.xlsx")
 # 转化为列表
 addresses = addresses['省市区街道'].tolist()
+addresses = addresses[:5000]
 
 total_addresses = len(addresses)
 
 # 使用多线程获取经纬度数据
 geocode_data = []
 threads = []
-num_threads = 10  # 适当减少线程数量
+num_threads = 3  # 适当减少线程数量
 requests_per_second = 3
 progress = [0]
 progress_lock = threading.Lock()
@@ -60,7 +61,7 @@ def worker(addresses, session, progress, lock):
             geocode_data.append(result)
             progress[0] += 1
             print(f"进度: {progress[0]}/{total_addresses}")
-        time.sleep(1 / requests_per_second)  # 控制每秒请求数量
+        time.sleep(requests_per_second / num_threads)  # 控制每秒请求数量
 
 # 创建Session对象
 session = requests.Session()
