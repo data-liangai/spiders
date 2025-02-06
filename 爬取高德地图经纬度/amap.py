@@ -25,21 +25,31 @@ def get_geocode(address, session, progress, lock):
         print(f"Error: {response.status_code} for address: {address}")  # 添加日志记录
         return address, None
 
-# 创建Excel文件并写入数据
+# 向Excel文件中追加数据,文件不存在则新建文件
 def write_to_excel(data, filename="geocode_results.xlsx"):
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    sheet.title = "Geocode Results"
-    sheet.append(["省市区街道", "经度", "纬度"])
+    try:
+        # 尝试加载现有的工作簿
+        workbook = openpyxl.load_workbook(filename)
+        sheet = workbook.active
+    except FileNotFoundError:
+        # 如果文件不存在，则创建新的工作簿
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Geocode Results"
+        sheet.append(["省市区街道", "经度", "纬度"])
+
+    # 追加数据到现有的工作表
     for item in data:
         if item[1]:
             sheet.append([item[0], item[1][0], item[1][1]])
         else:
             sheet.append([item[0], "未找到经度", "未找到纬度"])
+
+    # 保存工作簿
     workbook.save(filename)
 
 # 导入省市区街道数据
-addresses = pd.read_excel("cleaned.xlsx")
+addresses = pd.read_excel("../cleaned.xlsx")
 # 转化为列表
 addresses = addresses['省市区街道'].tolist()
 addresses = addresses[:5000]
